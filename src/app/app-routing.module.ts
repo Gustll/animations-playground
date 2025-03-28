@@ -3,8 +3,13 @@ import { RouterModule, Routes } from '@angular/router';
 
 const routes: Routes = [
     {
+        path: 'animation-projects',
+        loadChildren: () =>
+            import('./animation-projects/animation-projects.module').then((m) => m.AnimationProjectsModule),
+    },
+    {
         path: '',
-        redirectTo: '',
+        redirectTo: 'animation-projects',
         pathMatch: 'full',
     },
 ];
