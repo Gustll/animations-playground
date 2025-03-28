@@ -3,6 +3,40 @@ import { FormControl } from '@angular/forms';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 
+
+const vertexShader = `
+    varying vec3 vPosition;
+    varying vec3 vNormal;
+    varying vec3 vWorldPosition;
+
+    void main() {
+        vPosition = position;
+        vNormal = normalize(normalMatrix * normal);
+        vec4 worldPos = modelMatrix * vec4(position, 1.0);
+        vWorldPosition = worldPos.xyz;
+
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+    }
+`;
+
+const fragmentShader = `
+            uniform float uTime;
+            uniform vec3 uPulseOrigin;
+            varying vec3 vPosition;
+
+            void main() {
+                float dist = distance(vPosition, uPulseOrigin);
+                float pulse = sin((dist - uTime) * 5.0) * exp(-dist * 2.0);
+                pulse = max(pulse, 0.0);
+
+                vec3 baseColor = vec3(0.1, 0.1, 0.1); // very dark gray
+                vec3 pulseColor = vec3(0.0, 0.6, 1.0); // bluish pulse
+                vec3 finalColor = baseColor + pulse * pulseColor;
+
+                gl_FragColor = vec4(finalColor, 0.3); // Add transparency
+            }     
+        `;
+
 @Component({
     selector: 'app-flipper-ball',
     templateUrl: './flipper-ball.component.html',
@@ -25,6 +59,7 @@ export class FlipperBallComponent implements AfterViewInit {
     private lightAngle: number = 0;
 
     private flipperBall!: THREE.Mesh
+    private pulseStartTime: number = 0;
 
     private g: number = 9.81;
     public bounceVelocity: number = 1.2;
@@ -55,6 +90,22 @@ export class FlipperBallComponent implements AfterViewInit {
             }
         });
     }
+
+    private pulseUniforms = {
+        uTime: { value: 0 },
+        uPulseOrigin: { value: new THREE.Vector3(0, 0, 0) }
+    };
+
+    private pulseMaterial = new THREE.ShaderMaterial({
+        uniforms: this.pulseUniforms,
+        vertexShader,
+        fragmentShader,
+        transparent: true,
+        side: THREE.DoubleSide,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false
+    });
+
 
     private initCamera(): THREE.PerspectiveCamera {
         const camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 1, 1000);
@@ -88,17 +139,13 @@ export class FlipperBallComponent implements AfterViewInit {
 
         this.scene.add(this.light);
 
-
-        this.scene.add(new THREE.AxesHelper(20));
-
         let group = new THREE.Group()
         this.scene.add(group);
 
 
         // Create the ball
         const cageBallGeometry = new THREE.SphereGeometry(this.containerBallRadius);
-        const cageBallMaterial = new THREE.MeshStandardMaterial({ wireframe: true });
-        const cageBall = new THREE.Mesh(cageBallGeometry, cageBallMaterial);
+        const cageBall = new THREE.Mesh(cageBallGeometry, this.pulseMaterial);
 
 
         // Create the ball
@@ -128,6 +175,9 @@ export class FlipperBallComponent implements AfterViewInit {
         this.light.position.set(x, 0, z);
 
         this.updateFlipperBallPositions();
+
+        const currentTime = performance.now() / 1000;
+        this.pulseUniforms['uTime'].value = currentTime - this.pulseStartTime;
 
         this.renderer.render(this.scene, this.camera);
     }
@@ -162,6 +212,9 @@ export class FlipperBallComponent implements AfterViewInit {
 
             // Reposition ball just inside the boundary to prevent tunneling
             this.flipperBall.position.copy(normal.multiplyScalar(maxDistance));
+
+            this.pulseUniforms['uPulseOrigin'].value.copy(this.flipperBall.position);
+            this.pulseStartTime = performance.now() / 1000;
         }
     }
 
