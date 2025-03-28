@@ -1,1 +1,23 @@
-<p>collection works!</p>
+<div
+    class="pa4">
+    <div class="flex flex-wrap justify-between">
+        <!-- Loop through projects and display them in boxes -->
+         @for (project of projects; track project) {
+            <div
+            class="w-30 pa3 mb4 project br3">
+            <div class="">
+                <h3 class="f4">{{ project.name }}</h3>
+                <img
+                    [src]="project.imgUrl"
+                    [alt]="project.name"
+                    class="w-100 h-auto mb3">
+                <a
+                    [routerLink]="project.routerLink"
+                    class="link dim br2 ph3 pv2 mb2">
+                    View Project
+                </a>
+            </div>
+        </div>
+        }
+    </div>
+</div>
