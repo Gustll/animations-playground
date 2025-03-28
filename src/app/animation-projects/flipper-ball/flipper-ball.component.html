@@ -1,1 +1,20 @@
-<p>flipper-ball works!</p>
+<canvas
+    #canvas
+    class="fixed bottom-0 left-0 right-0 top-0"></canvas>
+
+<animation-controlls>
+    <div class="flex items-center w-100 justify-between">
+
+        <span >Bounce velocity:</span>
+        <mat-slider
+            
+            min="1"
+            max="30.9"
+            step="0.01">
+            <input
+                matSliderThumb
+                [formControl]="bounceVelocityControl">
+        </mat-slider>
+    </div>
+
+</animation-controlls>
