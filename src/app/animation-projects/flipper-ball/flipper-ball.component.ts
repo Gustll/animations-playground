@@ -1,4 +1,11 @@
-import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, HostListener, ViewChild } from '@angular/core';
+import {
+    AfterViewInit,
+    ChangeDetectorRef,
+    Component,
+    ElementRef,
+    HostListener,
+    ViewChild,
+} from '@angular/core';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import GUI from 'lil-gui';
@@ -40,7 +47,7 @@ const fragmentShader = `
     selector: 'app-flipper-ball',
     templateUrl: './flipper-ball.component.html',
     styleUrl: './flipper-ball.component.scss',
-    standalone: false
+    standalone: false,
 })
 export class FlipperBallComponent implements AfterViewInit {
     @ViewChild('canvas')
@@ -69,10 +76,7 @@ export class FlipperBallComponent implements AfterViewInit {
     private lastTime: number = performance.now();
     private maxVelocity: number = 15;
 
-    constructor(
-        private cdr: ChangeDetectorRef
-    ) {
-    }
+    constructor(private cdr: ChangeDetectorRef) {}
 
     public async ngAfterViewInit(): Promise<void> {
         // canvas should be available in ngAfterViewInit but not in ngOnInit
@@ -85,7 +89,7 @@ export class FlipperBallComponent implements AfterViewInit {
 
     private pulseUniforms = {
         uTime: { value: 0 },
-        uPulseOrigin: { value: new THREE.Vector3(0, 0, 0) }
+        uPulseOrigin: { value: new THREE.Vector3(0, 0, 0) },
     };
 
     private pulseMaterial = new THREE.ShaderMaterial({
@@ -95,12 +99,16 @@ export class FlipperBallComponent implements AfterViewInit {
         transparent: true,
         side: THREE.DoubleSide,
         blending: THREE.AdditiveBlending,
-        depthWrite: false
+        depthWrite: false,
     });
 
-
     private initCamera(): THREE.PerspectiveCamera {
-        const camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 1, 1000);
+        const camera = new THREE.PerspectiveCamera(
+            40,
+            window.innerWidth / window.innerHeight,
+            1,
+            1000,
+        );
 
         camera.position.set(0, 0, 20);
         camera.updateProjectionMatrix();
@@ -116,7 +124,10 @@ export class FlipperBallComponent implements AfterViewInit {
         }
 
         // Set up the controls
-        const controls = new OrbitControls(this.camera, this.renderer.domElement);
+        const controls = new OrbitControls(
+            this.camera,
+            this.renderer.domElement,
+        );
         controls.enableDamping = true; // For smooth controls
         controls.dampingFactor = 0.25;
         controls.screenSpacePanning = false;
@@ -126,23 +137,31 @@ export class FlipperBallComponent implements AfterViewInit {
 
         // point light
         this.light = new THREE.PointLight(0xffffff, 400);
-        this.light.add(new THREE.Mesh(new THREE.SphereGeometry(0.5, 16, 8), new THREE.MeshBasicMaterial({ color: 0xff0040 })));
+        this.light.add(
+            new THREE.Mesh(
+                new THREE.SphereGeometry(0.5, 16, 8),
+                new THREE.MeshBasicMaterial({ color: 0xff0040 }),
+            ),
+        );
         this.light.position.set(10, 0, 10);
 
         this.scene.add(this.light);
 
-        let group = new THREE.Group()
+        let group = new THREE.Group();
         this.scene.add(group);
 
-
         // Create the ball
-        const cageBallGeometry = new THREE.SphereGeometry(this.containerBallRadius);
+        const cageBallGeometry = new THREE.SphereGeometry(
+            this.containerBallRadius,
+        );
         this.cageBall = new THREE.Mesh(cageBallGeometry, this.pulseMaterial);
-
 
         // Create the ball
         const ballGeometry = new THREE.SphereGeometry(this.flipperBallRadius); // Sphere with radius 1, 32 segments (detail)
-        const ballMaterial = new THREE.MeshStandardMaterial({ color: "blue", roughness: 0 }); // Green color
+        const ballMaterial = new THREE.MeshStandardMaterial({
+            color: 'blue',
+            roughness: 0,
+        }); // Green color
         this.flipperBall = new THREE.Mesh(ballGeometry, ballMaterial); // Create the mesh
 
         // Add the bal
@@ -162,34 +181,39 @@ export class FlipperBallComponent implements AfterViewInit {
     private createPanel() {
         const panel = new GUI({ width: 310 });
 
-        const filpperBallFolder = panel.addFolder("Flipper Ball Controls")
-        const containerBallFolder = panel.addFolder("Container Ball Controls")
+        const filpperBallFolder = panel.addFolder('Flipper Ball Controls');
+        const containerBallFolder = panel.addFolder('Container Ball Controls');
 
         const flipperBallControls = {
-            bounceVelocity: 1.1
-        }
+            bounceVelocity: 1.1,
+        };
 
         const containerBallControls = {
-            containerBallRadius: this.containerBallRadius
-        }
+            containerBallRadius: this.containerBallRadius,
+        };
 
-        filpperBallFolder.add(flipperBallControls, 'bounceVelocity', 1.1, 35.0)
+        filpperBallFolder
+            .add(flipperBallControls, 'bounceVelocity', 1.1, 35.0)
             .name('Bounce Velocity')
             .onChange((value: number) => {
                 this.bounceVelocity = value;
             });
 
-        containerBallFolder.add(containerBallControls, 'containerBallRadius', 4, 20)
-            .name("Container Ball Radius")
+        containerBallFolder
+            .add(containerBallControls, 'containerBallRadius', 4, 20)
+            .name('Container Ball Radius')
             .onChange((value: number) => {
                 this.containerBallRadius = value;
-                const newGeometry = new THREE.SphereGeometry(this.containerBallRadius, 64, 64);
+                const newGeometry = new THREE.SphereGeometry(
+                    this.containerBallRadius,
+                    64,
+                    64,
+                );
 
                 // Update the mesh's geometry
                 this.cageBall.geometry.dispose(); // clean up old geometry
                 this.cageBall.geometry = newGeometry;
-            })
-
+            });
     }
 
     private animate() {
@@ -231,15 +255,21 @@ export class FlipperBallComponent implements AfterViewInit {
             const normal = this.flipperBall.position.clone().normalize();
 
             // Project velocity onto the normal to get component towards the surface
-            const velocityAlongNormal = normal.clone().multiplyScalar(this.velocity.dot(normal));
+            const velocityAlongNormal = normal
+                .clone()
+                .multiplyScalar(this.velocity.dot(normal));
 
             // Reflect velocity and apply bounce
-            this.velocity.sub(velocityAlongNormal.multiplyScalar(1 + this.bounceVelocity));
+            this.velocity.sub(
+                velocityAlongNormal.multiplyScalar(1 + this.bounceVelocity),
+            );
 
             // Reposition ball just inside the boundary to prevent tunneling
             this.flipperBall.position.copy(normal.multiplyScalar(maxDistance));
 
-            this.pulseUniforms['uPulseOrigin'].value.copy(this.flipperBall.position);
+            this.pulseUniforms['uPulseOrigin'].value.copy(
+                this.flipperBall.position,
+            );
             this.pulseStartTime = performance.now() / 1000;
         }
     }

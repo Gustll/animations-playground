@@ -5,7 +5,9 @@ const routes: Routes = [
     {
         path: 'animation-projects',
         loadChildren: () =>
-            import('./animation-projects/animation-projects.module').then((m) => m.AnimationProjectsModule),
+            import('./animation-projects/animation-projects.module').then(
+                (m) => m.AnimationProjectsModule,
+            ),
     },
     {
         path: '',
@@ -18,4 +20,4 @@ const routes: Routes = [
     imports: [RouterModule.forRoot(routes)],
     exports: [RouterModule],
 })
-export class AppRoutingModule { }
+export class AppRoutingModule {}

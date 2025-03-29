@@ -10,14 +10,14 @@ interface AnimationCollection {
     selector: 'app-collection',
     templateUrl: './collection.component.html',
     styleUrl: './collection.component.scss',
-    standalone: false
+    standalone: false,
 })
 export class CollectionComponent {
-
     public projects: AnimationCollection[] = [
         {
             name: 'Flipper Ball',
             imgUrl: '#',
-            routerLink: '/animation-projects/flipper-ball'
-        }]
+            routerLink: '/animation-projects/flipper-ball',
+        },
+    ];
 }
