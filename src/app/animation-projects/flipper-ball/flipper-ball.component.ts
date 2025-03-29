@@ -116,7 +116,7 @@ export class FlipperBallComponent implements AfterViewInit {
         return camera;
     }
 
-    private initAnimation() {
+    private initAnimation(): void {
         const canvas = this.canvas.nativeElement;
 
         if (!canvas) {
@@ -178,7 +178,7 @@ export class FlipperBallComponent implements AfterViewInit {
         this.renderer.setAnimationLoop(this.animate.bind(this));
     }
 
-    private createPanel() {
+    private createPanel(): void {
         const panel = new GUI({ width: 310 });
 
         const filpperBallFolder = panel.addFolder('Flipper Ball Controls');
@@ -216,7 +216,7 @@ export class FlipperBallComponent implements AfterViewInit {
             });
     }
 
-    private animate() {
+    private animate(): void {
         this.lightAngle += 0.01;
         this.lightAngle = this.lightAngle % (2 * Math.PI);
 
@@ -232,7 +232,7 @@ export class FlipperBallComponent implements AfterViewInit {
         this.renderer.render(this.scene, this.camera);
     }
 
-    private updateFlipperBallPositions() {
+    private updateFlipperBallPositions(): void {
         const currentTime = performance.now();
         const deltaTime = (currentTime - this.lastTime) / 1000; // Convert ms to seconds
         this.lastTime = currentTime;
