@@ -1,8 +1,7 @@
 import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, HostListener, ViewChild } from '@angular/core';
-import { FormControl } from '@angular/forms';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
-
+import GUI from 'lil-gui';
 
 const vertexShader = `
     varying vec3 vPosition;
@@ -26,14 +25,14 @@ const fragmentShader = `
 
             void main() {
                 float dist = distance(vPosition, uPulseOrigin);
-                float pulse = sin((dist - uTime) * 5.0) * exp(-dist * 2.0);
+                float pulse = sin((dist - uTime) * 10.0) * exp(-dist * 2.0);
                 pulse = max(pulse, 0.0);
 
                 vec3 baseColor = vec3(0.1, 0.1, 0.1); // very dark gray
                 vec3 pulseColor = vec3(0.0, 0.6, 1.0); // bluish pulse
                 vec3 finalColor = baseColor + pulse * pulseColor;
 
-                gl_FragColor = vec4(finalColor, 0.3); // Add transparency
+                gl_FragColor = vec4(finalColor, 10); // Add transparency
             }     
         `;
 
@@ -58,18 +57,17 @@ export class FlipperBallComponent implements AfterViewInit {
     private lightRadius: number = 8;
     private lightAngle: number = 0;
 
-    private flipperBall!: THREE.Mesh
+    private flipperBall!: THREE.Mesh;
+    private cageBall!: THREE.Mesh;
     private pulseStartTime: number = 0;
 
     private g: number = 9.81;
     public bounceVelocity: number = 1.2;
     private velocity: THREE.Vector3 = new THREE.Vector3(0.05, 0.05, 0.05);
     private containerBallRadius: number = 6;
+    private flipperBallRadius: number = 0.3;
     private lastTime: number = performance.now();
     private maxVelocity: number = 15;
-
-    //Form controls
-    public bounceVelocityControl = new FormControl(this.bounceVelocity);
 
     constructor(
         private cdr: ChangeDetectorRef
@@ -83,12 +81,6 @@ export class FlipperBallComponent implements AfterViewInit {
 
         this.initAnimation();
         this.cdr.detectChanges();
-
-        this.bounceVelocityControl.valueChanges.subscribe(value => {
-            if (typeof value === 'number') {
-                this.bounceVelocity = value;
-            }
-        });
     }
 
     private pulseUniforms = {
@@ -145,16 +137,16 @@ export class FlipperBallComponent implements AfterViewInit {
 
         // Create the ball
         const cageBallGeometry = new THREE.SphereGeometry(this.containerBallRadius);
-        const cageBall = new THREE.Mesh(cageBallGeometry, this.pulseMaterial);
+        this.cageBall = new THREE.Mesh(cageBallGeometry, this.pulseMaterial);
 
 
         // Create the ball
-        const ballGeometry = new THREE.SphereGeometry(0.3); // Sphere with radius 1, 32 segments (detail)
+        const ballGeometry = new THREE.SphereGeometry(this.flipperBallRadius); // Sphere with radius 1, 32 segments (detail)
         const ballMaterial = new THREE.MeshStandardMaterial({ color: "blue", roughness: 0 }); // Green color
         this.flipperBall = new THREE.Mesh(ballGeometry, ballMaterial); // Create the mesh
 
         // Add the bal
-        group.add(cageBall);
+        group.add(this.cageBall);
         group.add(this.flipperBall);
 
         // Position the group (optional)
@@ -162,8 +154,42 @@ export class FlipperBallComponent implements AfterViewInit {
 
         this.flipperBall.position.set(-5, -2, -1.8);
 
+        this.createPanel();
 
         this.renderer.setAnimationLoop(this.animate.bind(this));
+    }
+
+    private createPanel() {
+        const panel = new GUI({ width: 310 });
+
+        const filpperBallFolder = panel.addFolder("Flipper Ball Controls")
+        const containerBallFolder = panel.addFolder("Container Ball Controls")
+
+        const flipperBallControls = {
+            bounceVelocity: 1.1
+        }
+
+        const containerBallControls = {
+            containerBallRadius: this.containerBallRadius
+        }
+
+        filpperBallFolder.add(flipperBallControls, 'bounceVelocity', 1.1, 35.0)
+            .name('Bounce Velocity')
+            .onChange((value: number) => {
+                this.bounceVelocity = value;
+            });
+
+        containerBallFolder.add(containerBallControls, 'containerBallRadius', 4, 20)
+            .name("Container Ball Radius")
+            .onChange((value: number) => {
+                this.containerBallRadius = value;
+                const newGeometry = new THREE.SphereGeometry(this.containerBallRadius, 64, 64);
+
+                // Update the mesh's geometry
+                this.cageBall.geometry.dispose(); // clean up old geometry
+                this.cageBall.geometry = newGeometry;
+            })
+
     }
 
     private animate() {
@@ -198,7 +224,7 @@ export class FlipperBallComponent implements AfterViewInit {
 
         // Check collision with the inner surface of the cageBall
         const distanceFromCenter = this.flipperBall.position.length();
-        const maxDistance = this.containerBallRadius - 0.3; // Subtract flipperBall's radius
+        const maxDistance = this.containerBallRadius - this.flipperBallRadius;
 
         if (distanceFromCenter >= maxDistance) {
             // Normalize position to get the collision normal
